@@ -165,7 +165,7 @@ class Neighborhood:
         self.last_house_id += 1
         self.houses.append((House(self.last_house_id,1,1)))
 
-    def update_simulation(self,steps):
+    def fake_update(self,steps):
         tmp = 1.
         for k in range(steps):
             for i in range(len(self.houses)):
@@ -189,33 +189,6 @@ class Neighborhood:
         return 'Neighborhood: ' + self.name + '\n' + str(self.__dict__)
 
 
-
-'''
-quartier = Neighborhood(0,3)
-
-tmp = 1.
-for k in range(50):
-    for i in range(len(quartier.houses)):
-        for m in range(len(quartier.houses[i].suppliers)):
-            quartier.houses[i].suppliers[m].src_voltage.update(tmp,25*random.random())
-            quartier.houses[i].suppliers[m].src_current.update(tmp,25*random.random())
-            quartier.houses[i].suppliers[m].battery_voltage.update(tmp,25*random.random())
-            quartier.houses[i].suppliers[m].battery_current.update(tmp,25*random.random())
-            quartier.houses[i].suppliers[m].battery_remaining.update(tmp,25*random.random())
-            quartier.houses[i].suppliers[m].push_voltage.update(tmp,25*random.random())
-            quartier.houses[i].suppliers[m].push_current.update(tmp,25*random.random())
-        for j in range(len(quartier.houses[i].consumers)):
-            quartier.houses[i].consumers[j].pull.update(tmp,10*random.random())
-    tmp += .2
-
-
-print(quartier.houses[0].consume())
-print(quartier.houses[0].supply()[6])
-print(quartier.houses[1].consume())
-print(quartier.houses[1].supply()[6])
-print(quartier.houses[2].consume())
-print(quartier.houses[2].supply()[6])
-'''
 
 if __name__ == '__main__':
     print('Energrid Imported')
