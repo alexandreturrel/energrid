@@ -1,7 +1,12 @@
+#############################################
+#               ENERGRID_CORE               #
+#############################################
+
+
 ## Energrid architecture to map all elements needed to the solution
 
 import random
-
+import energrid_mqtt as mqtt
 
 ## Pseudo database to test operations and serialization
 ## all data retrieved from the electric grid is homogeneous
@@ -37,25 +42,26 @@ class Data:
     def __repr__(self):
         return str(self.__dict__)
 
-    def __str__(self):
-        result = ''
-        result += 'last: ' + str(self.last) + '\t'
-        result += 'mean: ' + str(self.mean) + '\t'
-        result += 'min: ' + str(self.min) + '\t'
-        result += 'max: ' + str(self.max) + '\t'
-        result += 'values: ' + str(self.values) + '\t'
+#    def __str__(self):
+#        result = ''
+#        result += 'last: ' + str(self.last) + '\t'
+#        result += 'mean: ' + str(self.mean) + '\t'
+#        result += 'min: ' + str(self.min) + '\t'
+#        result += 'max: ' + str(self.max) + '\t'
+#        result += 'values: ' + str(self.values) + '\t'
        ## result += 'db_timestamp: ' + str(['{:.3f}'.format(x) for x in self.db_timestamp]) + '\n'
        ## result += 'db_values: ' + str(['{:.3f}'.format(x) for x in self.db_values]) + '\n'
-        result += 'state: ' + str(self.state) + '\n'
-        return result
+#        result += 'state: ' + str(self.state) + '\n'
+#        return result
 
 
 
 ## Electricity Supplier part of a House
 ## can be up to 9 per House
 class Supplier:
-    def __init__(self, identifier):
+    def __init__(self, identifier, house_name):
         self.id = identifier
+        self.name = house_name + '/Supplier/' + str(self.id)
         self.type = ''
         self.src_voltage = Data()
         self.src_current = Data()
@@ -64,63 +70,97 @@ class Supplier:
         self.battery_remaining = Data()
         self.push_voltage = Data()
         self.push_current = Data()
+        self.mqtt = mqtt.Client(self.name)
+        self.mqtt.on_message = self.on_message
+    
+    def set_type(self, new_type):
+        self.type = str(new_type)
+
+    def on_message(self, client, userdata, message):
+        print("supplier mqtt client")
 
     def __repr__(self):
-        return str(self.__dict__)
+        result = {}
+        result['id'] = self.id
+        result['name'] = self.name
+        result['type'] = self.type
+        result['src_voltage'] = self.src_voltage
+        result['src_current'] = self.src_current
+        result['battery_voltage'] = self.battery_voltage
+        result['battery_current'] = self.battery_current
+        result['battery_remaining'] = self.battery_remaining
+        result['push_voltage'] = self.push_voltage
+        result['push_current'] = self.push_current
+        return str(result)
 
-    def __str__(self):    
-        result = ''
-        result += 'Supplier ' + str(self.id) + '\n'
-        result += 'type: ' + self.type + '\n'
-        result += 'src_voltage: ' + '\t\t' + str(self.src_voltage)
-        result += 'src_current: ' + '\t\t' + str(self.src_current)
-        result += 'battery_voltage: ' + '\t' + str(self.battery_voltage)
-        result += 'battery_current: ' + '\t' + str(self.battery_current)
-        result += 'battery_remaining: ' + '\t' + str(self.battery_remaining)
-        result += 'push_voltage: ' + '\t\t' + str(self.push_voltage)
-        result += 'push_current: ' + '\t\t' + str(self.push_current)
-        return result
+#    def __str__(self):    
+#        result = ''
+#        result += 'Supplier ' + str(self.id) + '\n'
+#        result += 'type: ' + self.type + '\n'
+#        result += 'src_voltage: ' + '\t\t' + str(self.src_voltage)
+#        result += 'src_current: ' + '\t\t' + str(self.src_current)
+#        result += 'battery_voltage: ' + '\t' + str(self.battery_voltage)
+#        result += 'battery_current: ' + '\t' + str(self.battery_current)
+#        result += 'battery_remaining: ' + '\t' + str(self.battery_remaining)
+#        result += 'push_voltage: ' + '\t\t' + str(self.push_voltage)
+#        result += 'push_current: ' + '\t\t' + str(self.push_current)
+#        return result
 
 
 ## Electricity Consumer part of a House
 ## can be up to 99 per House
 class Consumer:
-    def __init__(self, identifier):
+    def __init__(self, identifier, house_name):
         self.id = identifier
+        self.name = house_name + '/Consumer/' + str(self.id)
         self.type = ''
         self.pull = Data()
+        self.mqtt = mqtt.Client(self.name)
+        self.mqtt.on_message = self.on_message
+
+    def set_type(self, new_type):
+        self.type = str(new_type)
+
+    def on_message(self, client, userdata, message):
+        print("consumer mqtt client")
 
     def __repr__(self):
-        return str(self.__dict__)
+        result = {}
+        result['id'] = self.id
+        result['name'] = self.name
+        result['type'] = self.type
+        result['pull'] = self.pull
+        return str(result)
 
-    def __str__(self):
-        result = ''
-        result += 'Consumer: ' + str(self.id) + '\n'
-        result += 'type: ' + self.type + '\n'
-        result += 'pull: ' + '\t\t' + str(self.pull)
-        return result
+#    def __str__(self):
+#        result = ''
+#        result += 'Consumer: ' + str(self.id) + '\n'
+#        result += 'type: ' + self.type + '\n'
+#        result += 'pull: ' + '\t\t' + str(self.pull)
+#        return result
 
 
 ##
 class House:
-    def __init__(self, identifier, suppliers_qntity, consumers_qntity):
+    def __init__(self, identifier, neighborhood_name, suppliers_qntity, consumers_qntity):
         self.id = identifier
-        self.last_supplier_id = 10 * identifier
+        self.name = neighborhood_name + '/House/' + str(self.id)
+        self.last_supplier_id = 0
         self.suppliers = []
         for i in range(suppliers_qntity):
             self.add_supplier()
-        self.last_consumer_id = 100 * identifier
+        self.last_consumer_id = 0
         self.consumers = []
         for i in range(consumers_qntity):
             self.add_consumer()
 
     def add_supplier(self):
         self.last_supplier_id += 1
-        self.suppliers.append(Supplier(self.last_supplier_id))
+        self.suppliers.append(Supplier(self.last_supplier_id,self.name))
 
     def add_consumer(self):
         self.last_consumer_id += 1
-        self.consumers.append(Consumer(self.last_consumer_id))
+        self.consumers.append(Consumer(self.last_consumer_id,self.name))
 
     def consume(self):
         result = 0
@@ -149,7 +189,7 @@ class Neighborhood:
     def __init__(self, quantity_houses):
         self.id = Neighborhood.nb_id
         Neighborhood.nb_id += 1
-        self.name = ""
+        self.name = 'Neighborhood/' + str(self.id)
         self.last_house_id = 0
         self.houses = []
         for i in range(quantity_houses):
@@ -163,7 +203,7 @@ class Neighborhood:
 
     def add_house(self):
         self.last_house_id += 1
-        self.houses.append((House(self.last_house_id,1,1)))
+        self.houses.append((House(self.last_house_id,self.name,1,1)))
 
     def fake_update(self,steps):
         tmp = 1.
