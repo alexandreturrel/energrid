@@ -3,16 +3,18 @@
 #############################################
 
 import energrid_core as Core
-import energrid_db as DataBase
-import energrid_mqtt as Mqtt
+#import energrid_db as DataBase
+#import energrid_mqtt as Mqtt
 
 from random import randrange
-import threading
+#import threading
+
+OPTIONS = ['new', 'update', 'remove', 'status', 'database']
 
 def start_server():
     test = True
 
-    mqttClient = Mqtt.Client('client')
+    mqttClient = Mqtt.Client('sdfqigqlkvgqiugv')
 
     mqttClient.add_topic('publishing')
 
@@ -23,15 +25,15 @@ def start_server():
         
         clients = []
 
-        n = Core.Neighborhood(5)
+        n = Core.Neighborhood(1)
         
         for house in n.houses:
             #adding suppliers and consumers
-            tmp = randrange(5)
-            tmp2 = randrange(3)
-            for j in range(tmp):
+            nb_houses = randrange(3)
+            nb_suppliers = randrange(2)
+            for j in range(nb_houses):
                 house.add_consumer()
-            for h in range(tmp2):
+            for h in range(nb_suppliers):
                 house.add_supplier()
 
 #        #multiple connections
@@ -52,16 +54,16 @@ def start_server():
 
         for house in n.houses:
             for consumer in house.consumers:
-                print(consumer.mqtt)
-                consumer.mqtt.client.publish(consumer.name + '/test',str(consumer))
+                print("consumer: " + consumer.name)
+                print(consumer)
+                house.client.publish(str(consumer.name), str(consumer))
             for supplier in house.suppliers:
-                supplier.mqtt.client.publish(supplier.name + '/test', str(supplier))
+                print("supplier: " + supplier.name)
+                print(supplier)
+                house.client.publish(supplier.name, str(supplier))
 
         for house in n.houses:
-            for consumer in house.consumers:
-                consumer.mqtt.disconnect()
-            for supplier in house.suppliers:
-                supplier.mqtt.disconnect()
+            house.client.disconnect()
 
     mqttClient.disconnect()
 
