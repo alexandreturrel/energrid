@@ -1,9 +1,10 @@
 # Energrid
 
 ## Creators: 
- - DABBOUS TALA
- - DE VERGNES BENOIT
- - TURREL ALEXANDRE
+ 
+DABBOUS TALA | DE VERGNES BENOIT | TURREL ALEXANDRE
+-------------|-------------------|------------------
+VR Software Manager | Hardware & Electronics Manager | Server & Data Manager
 
 ## Description
 A Smart grid management solution with a Virtual Reality interface.
