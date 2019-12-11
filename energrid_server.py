@@ -4,7 +4,7 @@
 
 import energrid_core as Core
 #import energrid_db as DataBase
-#import energrid_mqtt as Mqtt
+import energrid_mqtt as Mqtt
 
 from random import randrange
 #import threading
@@ -54,12 +54,8 @@ def start_server():
 
         for house in n.houses:
             for consumer in house.consumers:
-                print("consumer: " + consumer.name)
-                print(consumer)
                 house.client.publish(str(consumer.name), str(consumer))
             for supplier in house.suppliers:
-                print("supplier: " + supplier.name)
-                print(supplier)
                 house.client.publish(supplier.name, str(supplier))
 
         for house in n.houses:
