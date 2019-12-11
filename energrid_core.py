@@ -6,10 +6,10 @@
 
 import json
 import logging
-import datetime
+from datetime import datetime
 import time
 
-logging.basicConfig(filename='energrid' + str(datetime.datetime.now()) + '.log',filemode='a', format='%(asctime) - %(levelname)s - %(message)s', level=logging.DEBUG)
+logging.basicConfig(filename='energrid' + str(datetime.now()) + '.log',filemode='a', format='%(asctime) - %(levelname)s - %(message)s', level=logging.DEBUG)
 
 
 #############################################
@@ -85,23 +85,37 @@ class Client:
             self.client.connected_flag = True
 
     def on_message(self, client, userdata, message):
-        print(message.topic)
         logging.info('message received on %s', message.topic)
-        parsed_message = message.topic.split("/")
-        current_house_id = parsed_message[3]
-        current_peripheral_category = parsed_message[4]
-        current_peripheral_id = parsed_message[5]
+        parsed_topic = message.topic.split("/")
+        current_house_id = str(parsed_topic[3])
+        current_peripheral_category = str(parsed_topic[4])
+        parsed_message = json.loads(message.payload)
+        current_peripheral_id = None
+        if len(parsed_topic) == 6:
+            current_peripheral_id = parsed_topic[5]
         check = False
-        for consumer in House.consumers:
-            print(consumer.name)
-            if message.topic == consumer.name:
-                consumer.pull.update(message.payload)
-                check = True
-        for supplier in House.suppliers:
-            print(supplier.name)
-            if message.topic == supplier.name:
-                print(str(message.payload.decode("utf8")))
-                check = True
+        if current_peripheral_category == "Consumer":
+            #retrieving data from sensors
+            if str(parsed_topic[-1]) == "Consumer":
+                for key in parsed_message:
+                    if str(key) != '0':
+                        tmp_topic = "Neighborhood/0/House/" + current_house_id +"/"+ current_peripheral_category +"/"+str(key)
+                        print(tmp_topic)
+                        for consumer in House.consumers:
+                            if tmp_topic == consumer.name:
+                                print("in")
+                                consumer.pull.update(time.time(), parsed_message[key])
+                    else:
+                        print("0")
+                    check = True
+
+        elif current_peripheral_category == "Supplier":
+            #retrieving data from sensors
+            if parsed_topic[-1] == "Supplier":
+                for supplier in House.suppliers:
+                    if message.topic == supplier.name:
+                        check = True
+                        print(str(message.payload.decode("utf8")))
         if check == False:
             print("Wrong peripheral")
 
@@ -192,7 +206,10 @@ class Supplier:
     def __init__(self, identifier, house_name):
         logging.info('new Supplier created')
         self.id = identifier
-        self.name = house_name + "/Supplier/" + str(self.id)
+        if identifier == '':
+            self.name = house_name + "/Supplier"
+        else:
+            self.name = house_name + "/Supplier/" + str(self.id)
         self.type = ""
         self.src_voltage = Data()
         self.src_current = Data()
@@ -228,7 +245,10 @@ class Consumer:
     def __init__(self, identifier, house_name):
         logging.info('new Consumer created')
         self.id = identifier
-        self.name = house_name + "/Consumer/" + str(self.id)
+        if identifier == '':
+            self.name = house_name + "/Consumer"
+        else:
+            self.name = house_name + "/Consumer/" + str(self.id)
         self.type = ""
         self.pull = Data()
 
@@ -250,7 +270,7 @@ class Consumer:
 #############################################
 class House:
 
-    client = Client('GenericHouse')
+    client = Client('GhostHouse')
     last_consumer_id = 0
     last_supplier_id = 0
     suppliers = []
@@ -263,12 +283,13 @@ class House:
         self.id = identifier
         self.name = neighborhood_name + "/House/" + str(self.id)
         self.client = Client(self.name)
-        self.client.on_message = self.on_message
 
-        self.consumption = Consumer(0,self.name)
+        self.consumption = Consumer('',self.name)
         House.consumers.append(self.consumption)
-        self.supply = Supplier(0,self.name)
+        House.client.add_topic(self.consumption.name)
+        self.supply = Supplier('',self.name)
         House.suppliers.append(self.supply)
+        House.client.add_topic(self.supply.name)
 
         #suppliers
         self.last_supplier_id = 0
@@ -287,7 +308,7 @@ class House:
         self.last_consumer_id += 1
         self.consumers.append(Consumer(self.last_consumer_id,self.name))
         House.last_consumer_id += 1
-        House.consumers.append(Consumer(House.last_consumer_id,self.name))
+        House.consumers.append(self.consumers[-1])
         self.client.add_topic(self.consumers[-1].name)
 
     def rm_consumer(self,old_consumer_name):
@@ -297,36 +318,30 @@ class House:
                 self.client.rm_topic(old_consumer_name)
                 self.consumers.pop(i)
                 break
+        for j in range(len(House.consumers)):
+            if House.consumers[j].name == old_consumer_name:
+                House.consumers.pop(j)
+                break
 
     def add_supplier(self):
         logging.info('new Supplier add to the %s', self.name)
+        House.last_supplier_id += 1
         self.last_supplier_id += 1
         self.suppliers.append(Supplier(self.last_supplier_id,self.name))
-        House.last_supplier_id += 1
-        House.suppliers.append(Supplier(House.last_supplier_id,self.name))
+        House.suppliers.append(self.suppliers[-1])
         self.client.add_topic(self.suppliers[-1].name)
 
     def rm_supplier(self,old_supplier_name):
         for i in range(len(self.suppliers)):
-            if self.supppliers[i] == old_supplier_name:
+            if self.suppliers[i].name == old_supplier_name:
                 logging.info('Supplier %s removed from %s', old_supplier_name, self.name)
-                self.suppliers.pop(i)
                 self.client.rm_topic(old_supplier_name)
-
-    def on_message(self, client, userdata, message):
-        print("House")
-        logging.info('message received on %s', message.topic)
-        parsed_message = message.topic.split("/")
-        current_house_id = parsed_message[3]
-        current_peripheral_category = parsed_message[4]
-        current_peripheral_id = parsed_message[5]
-        if message.topic in House.consumers:
-            print(str(message.payload.decode("utf8")))
-        elif message.topic in House.suppliers:  #Supplier
-            print(str(message.payload.decode("utf8")))
-        else:
-            print("Invalid Peripheral")
-        return 0
+                self.suppliers.pop(i)
+                break
+        for j in range(len(House.suppliers)):
+            if House.suppliers[j].name == old_supplier_name:
+                House.suppliers.pop(j)
+                break
 
     def consume(self):
         logging.debug('%s consumption updated', self.name)
@@ -357,7 +372,7 @@ class House:
 class Neighborhood:
     nb_id = 0
 
-    client = Client('GenericNeighborhood')
+    #client = Client('GenericNeighborhood')
     last_house_id = 0
     houses = []
 
@@ -382,6 +397,7 @@ class Neighborhood:
         logging.info('add new House to %s', self.name)
         self.last_house_id += 1
         self.houses.append((House(self.last_house_id,self.name,1,1)))
+        Neighborhood.houses.append(self.houses[-1])
 
     def __repr__(self):
         return str(self.__dict__)
