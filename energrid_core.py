@@ -94,28 +94,60 @@ class Client:
         if len(parsed_topic) == 6:
             current_peripheral_id = parsed_topic[5]
         check = False
+        print(parsed_topic)
+        print(parsed_message)
         if current_peripheral_category == "Consumer":
             #retrieving data from sensors
             if str(parsed_topic[-1]) == "Consumer":
                 for key in parsed_message:
-                    if str(key) != '0':
+                    if str(key) != "0":
                         tmp_topic = "Neighborhood/0/House/" + current_house_id +"/"+ current_peripheral_category +"/"+str(key)
-                        print(tmp_topic)
-                        for consumer in House.consumers:
-                            if tmp_topic == consumer.name:
-                                print("in")
-                                consumer.pull.update(time.time(), parsed_message[key])
+                    elif str(key) == "0":
+                        tmp_topic = str(message.topic)
                     else:
-                        print("0")
-                    check = True
+                        break
+                    for consumer in House.consumers:
+                        if tmp_topic == consumer.name:
+                            consumer.pull.update(time.time(), parsed_message[key])
+                check = True
 
         elif current_peripheral_category == "Supplier":
             #retrieving data from sensors
-            if parsed_topic[-1] == "Supplier":
-                for supplier in House.suppliers:
-                    if message.topic == supplier.name:
-                        check = True
-                        print(str(message.payload.decode("utf8")))
+            if str(parsed_topic[-1]) == "Supplier":
+                for each_id in parsed_message:
+                    tmp_topic = "Neighborhood/0/House/" + current_house_id +"/"+ current_peripheral_category +"/"+str(each_id)
+                    for supplier in House.suppliers:
+                        if tmp_topic in supplier.name:
+                            def src_v():
+                                return suplier.src_voltage
+                            def src_c():
+                                return supplier.src_current
+                            def push_v():
+                                return supplier.push_voltage
+                            def push_c():
+                                return supplier.push_current
+                            def battery_v():
+                                return supplier.battery_voltage
+                            def battery_c():
+                                return supplier.battery_current
+                            def battery_r():
+                                return supplier.battery_remaining
+                            options = {
+                                "pvvoltage": src_v,
+                                "pvcurrent": src_c,
+                                "lvoltage": push_v,
+                                "lcurrent": push_c,
+                                "bvoltage": battery_v,
+                                "bcurrent": battery_c,
+                                "bremaining": battery_r,
+                            }
+                            for each_sensor in parsed_message[u'{}'.format(each_id)]:
+                                print(each_sensor)
+                                if str(each_sensor) in options:
+                                    print(options[u'{}'.format(each_sensor)])
+                                    #options[i]().update(time.time(), parsed_message[int(each_id)][each_sensor])
+                            check = True
+                
         if check == False:
             print("Wrong peripheral")
 
