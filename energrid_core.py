@@ -94,8 +94,8 @@ class Client:
         if len(parsed_topic) == 6:
             current_peripheral_id = parsed_topic[5]
         check = False
-        print(parsed_topic)
-        print(parsed_message)
+        #print(parsed_topic)
+        #print(parsed_message)
         if current_peripheral_category == "Consumer":
             #retrieving data from sensors
             if str(parsed_topic[-1]) == "Consumer":
@@ -119,7 +119,7 @@ class Client:
                     for supplier in House.suppliers:
                         if tmp_topic in supplier.name:
                             def src_v():
-                                return suplier.src_voltage
+                                return supplier.src_voltage
                             def src_c():
                                 return supplier.src_current
                             def push_v():
@@ -142,10 +142,11 @@ class Client:
                                 "bremaining": battery_r,
                             }
                             for each_sensor in parsed_message[u'{}'.format(each_id)]:
-                                print(each_sensor)
+                                #print(each_sensor)
                                 if str(each_sensor) in options:
-                                    print(options[u'{}'.format(each_sensor)])
-                                    #options[i]().update(time.time(), parsed_message[int(each_id)][each_sensor])
+                                    #print(options[u'{}'.format(each_sensor)])
+                                    #print(parsed_message[u'{}'.format(each_id)][u'{}'.format(each_sensor)])
+                                    options[u'{}'.format(each_sensor)]().update(time.time(), parsed_message[u'{}'.format(each_id)][u'{}'.format(each_sensor)])
                             check = True
                 
         if check == False:
