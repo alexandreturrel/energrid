@@ -1,39 +1,66 @@
+#===================#
+#   START SERVER    #
+#===================#
+
+# 1 january 2020
+# code by Alexandre TURREL https://github.com/alexandreturrel
+# for Polytech Sorbonne Engineering project lead by Francois PECHEUX
+
+
+#imports
 import energrid_core as e
 import os
 import sys
 
+#userguide
 def help():
+    print('')
+    print('')
     print('#=========================================#')
     print('|         Energrid Server Manager         |')
     print('#=========================================#')
     print('')
     print('Welcome! Here are useful commands to edit your Neighborhood:')
-
+    print('')
     print('\tdebug(BOOLEAN)\t\t\t\ttoggle DEBUG mode')
     print('\thelp()\t\t\t\t\tshows this message')
+    print('#=========================================#')
     print('\tnewHouse()\t\t\t\tcreates a new House')
     print('\tnewHouse(int VALUE)\t\t\tcreates VALUE new Houses')
+    print('\tshowHouses()\t\t\t\tdisplay all Houses available')
+    print('#=========================================#')
     print('\tnewConsumer(int HouseID, string Type)\t\tcreates a new Consumer for HouseID')
     print('\tnewConsumer(int HouseID, int X, string Type)\tcreates X new Consumers for HouseID')
-    print('\tnewSupplier(int HouseID, string Type)\t\tcreates a new Supplier for HouseID')
-    print('\tnewSupplier(int HouseID, int X, string Type)\tcreates X new Suppliers for HouseID')
-    print('\tshowHouses()\t\t\t\tdisplay all Houses available')
     print('\tshowConsumers(int HouseID)\t\tshows all Consumers of HouseID')
     print('\tshowConsumers(int HouseID,int CsmID)\tshows ConsumerID of HouseID')
+    print('\tsetConsumer(int HouseID, int CsmID, [0,1])\tset on or off a Consumer')
+    print('#=========================================#')
+    print('\tnewSupplier(int HouseID, string Type)\t\tcreates a new Supplier for HouseID')
+    print('\tnewSupplier(int HouseID, int X, string Type)\tcreates X new Suppliers for HouseID')
     print('\tshowSuppliers(int HouseID)\t\tshows all Suppliers of HouseID')
     print('\tshowSuppliers(int HouseID,int SplID)\tshows SupplierID of HouseID')
+    print('\tsetSupplier(int HouseID, int SplID, [0,1])\tset on or off a Supplier')
+    print('#=========================================#')
     print('\tstart_demo()\t\t\t\tDemonstration purpose generative script (in french)')
+    print('#=========================================#')
+    print('')
+    print('')
 
+#start the server creating an empty neighborhood
 n = e.Neighborhood(0)
 
 help()
+
+#==============================================
+#   DEBUG
+#==============================================
 
 def debug(booleanValue):
     for house in n.houses:
         e.Client.debug = booleanValue
 
 #==============================================
-
+#   HOUSES
 #==============================================
 
 def newHouse(*args):
@@ -52,7 +79,7 @@ def showHouses():
 
 
 #==============================================
-
+#   CONSUMERS
 #==============================================
 
 def newConsumer(*args):
@@ -75,9 +102,17 @@ def showConsumers(*args):
     elif len(args) == 2:
         print(n.houses[args[0]-1].consumers[args[1]-1])
 
+def setConsumer(*args):
+    if len(args) == 3:
+        result = "Neighborhood/0/House/"+ str(args[0]) + "/Consumer/" + str(args[1]) + "/set"
+        command = 'mosquitto_pub -h 127.0.0.1 -m ' + str(args[2]) + ' -t ' + result
+        os.system(command)
+    else:
+        print('Error: Expecting:')
+        print('setConsumer(int HouseID, int CsmID, [0,1])')
 
 #==============================================
-
+#   SUPPLIERS
 #==============================================
 
 def newSupplier(*args):
@@ -92,7 +127,6 @@ def newSupplier(*args):
         print('Error! Expecting:')
         print('newSupplier(HouseID, string SplType) or newSupplier(HouseID, [nbOfSplToCreate], string SplType)')
 
-
 def showSuppliers(*args):
     if len(args) == 1:
         for supplier in n.houses[args[0]-1].suppliers:
@@ -100,12 +134,20 @@ def showSuppliers(*args):
     elif len(args) == 2:
         print(n.houses[args[0]-1].suppliers[args[1]-1])
 
+def setSupplier(*args):
+    if len(args) == 3:
+        result = "Neighborhood/0/House/"+ str(args[0]) + "/Supplier/" + str(args[1]) + "/booleanLoad"
+        command = 'mosquitto_pub -h 127.0.0.1 -m ' + str(args[2]) + ' -t ' + result
+        os.system(command)
+    else:
+        print('Error: Expecting:')
+        print('setConsumer(int HouseID, int CsmID, [0,1])')
 
 #==============================================
-
+#   DEMO
 #==============================================
 
-def start_demo():
+def startDemo():
     newHouse(2)
     print('Creation des deux maisons pour la demonstration')
     for i in [1,2]:

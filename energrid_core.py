@@ -2,15 +2,18 @@
 #               ENERGRID_CORE               #
 #############################################
 
+# 1 january 2020
+# code by Alexandre TURREL https://github.com/alexandreturrel
+# for Polytech Sorbonne Engineering project lead by Francois PECHEUX
+
+
+
 ## Energrid architecture to map all elements needed to the solution
 
 import json
 import logging
 from datetime import datetime
 import time
-
-# logging.basicConfig(filename='energrid' + str(datetime.now()) + '.log',filemode='a', format='%(asctime) - %(levelname)s - %(message)s', level=logging.DEBUG)
-
 
 #############################################
 #               ENERGRID_MQTT               #
@@ -104,8 +107,6 @@ class Client:
         if len(parsed_topic) == 6:
             current_peripheral_id = parsed_topic[5]
         check = False
-        #print(parsed_topic)
-        #print(parsed_message)
         if current_peripheral_category == "Consumer":
             #retrieving data from sensors
             if str(parsed_topic[-1]) == "Consumer":
@@ -118,13 +119,16 @@ class Client:
                         break
                     for consumer in House.consumers:
                         if tmp_topic == consumer.name:
-                            consumer.pull.update(time.time(), ((parsed_message[key]*1.435)/929))
+                            range1 = [0,1700]
+                            range2 = [-15,15]
+                            delta1 = range1[1]-range1[0]
+                            delta2 = range2[1]-range2[0]
+                            result = (delta2 * (parsed_message[key] - range1[0]) / delta1) + range2[0]
+                            consumer.pull.update(time.time(), result)
                             if parsed_message[key] > 870:
                                 consumer.pull.set_status(True)
-                                #print(consumer.name + ' isOn')
                             else:
                                 consumer.pull.set_status(False)
-                                #print(consumer.name + ' isOff')
                 check = True
 
         elif current_peripheral_category == "Supplier":
@@ -158,25 +162,12 @@ class Client:
                                 "bremaining": battery_r,
                             }
                             for each_sensor in parsed_message[u'{}'.format(each_id)]:
-                                #print(each_sensor)
                                 if str(each_sensor) in options:
-                                    #print(options[u'{}'.format(each_sensor)])
-                                    #print(parsed_message[u'{}'.format(each_id)][u'{}'.format(each_sensor)])
                                     options[u'{}'.format(each_sensor)]().update(time.time(), parsed_message[u'{}'.format(each_id)][u'{}'.format(each_sensor)])
                             check = True
                 
         if check == False:
             print("Wrong peripheral")
-
-#        result = {message.topic: str(message.payload.decode("utf-8"))}
-#        self.historic.append(result)
-#        infos = json.loads(message.payload)
-
-#        for op in Client.OPTIONS:
-#            if infos.get(op) is not None:
-#                print "Success"
-#        return result
-
 
     def on_disconnect(self, client, userdata, rc):
         if Client.debug:
@@ -424,7 +415,6 @@ class House:
 class Neighborhood:
     nb_id = 0
 
-    #client = Client('GenericNeighborhood')
     last_house_id = 0
     houses = []
 
