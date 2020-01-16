@@ -3,3 +3,4 @@ demo/
 old/
 *.sublime-*
 *.log
+*.swp

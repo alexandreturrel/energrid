@@ -9,7 +9,7 @@ import logging
 from datetime import datetime
 import time
 
-logging.basicConfig(filename='energrid' + str(datetime.now()) + '.log',filemode='a', format='%(asctime) - %(levelname)s - %(message)s', level=logging.DEBUG)
+# logging.basicConfig(filename='energrid' + str(datetime.now()) + '.log',filemode='a', format='%(asctime) - %(levelname)s - %(message)s', level=logging.DEBUG)
 
 
 #############################################
@@ -21,7 +21,7 @@ import threading
 
 class Client:
 
-    debug = True
+    debug = False
 
     OPTIONS = ['new', 'update', 'remove', 'status', 'database']
 
@@ -108,7 +108,13 @@ class Client:
                         break
                     for consumer in House.consumers:
                         if tmp_topic == consumer.name:
-                            consumer.pull.update(time.time(), parsed_message[key])
+                            consumer.pull.update(time.time(), ((parsed_message[key]*1.435)/929))
+                            if parsed_message[key] > 870:
+                                consumer.pull.set_status(True)
+                                #print(consumer.name + ' isOn')
+                            else:
+                                consumer.pull.set_status(False)
+                                #print(consumer.name + ' isOff')
                 check = True
 
         elif current_peripheral_category == "Supplier":
@@ -218,6 +224,9 @@ class Data:
         if value < self.min:
             self.min = value
 
+    def set_status(self, new_status):
+        self.state = new_status
+
     def __repr__(self):
         result = {}
         result["last"] = self.last
@@ -261,13 +270,13 @@ class Supplier:
         result["id"] = self.id
         result["name"] = self.name
         result["type"] = self.type
-        result["src_voltage"] = self.src_voltage
-        result["src_current"] = self.src_current
-        result["battery_voltage"] = self.battery_voltage
-        result["battery_current"] = self.battery_current
-        result["battery_remaining"] = self.battery_remaining
-        result["push_voltage"] = self.push_voltage
-        result["push_current"] = self.push_current
+        result["src_voltage"] = self.src_voltage.last
+        result["src_current"] = self.src_current.last
+        result["battery_voltage"] = self.battery_voltage.last
+        result["battery_current"] = self.battery_current.last
+        result["battery_remaining"] = self.battery_remaining.last
+        result["push_voltage"] = self.push_voltage.last
+        result["push_current"] = self.push_current.last
         return str(result)
 
 #############################################
@@ -294,7 +303,7 @@ class Consumer:
         result["id"] = self.id
         result["name"] = self.name
         result["type"] = self.type
-        result["pull"] = self.pull
+        result["pull"] = self.pull.last
         return str(result)
 
 
@@ -429,7 +438,7 @@ class Neighborhood:
     def add_house(self):
         logging.info('add new House to %s', self.name)
         self.last_house_id += 1
-        self.houses.append((House(self.last_house_id,self.name,1,1)))
+        self.houses.append((House(self.last_house_id,self.name,0,0)))
         Neighborhood.houses.append(self.houses[-1])
 
     def __repr__(self):
