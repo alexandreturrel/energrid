@@ -55,11 +55,3 @@ links all services together and supervise the grid
 #### energrid - a0.5
 starts an interactive python interpreter with all dependencies and start the server
 
-comments:
-
-0A value is 870 on analog values
-
-1.150A	910	LED		810
-1.435A	929	resistor	803
-2.06A	888(led)	923(resistor)	led+ressistor	0: 772
-
