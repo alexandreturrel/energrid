@@ -38,9 +38,13 @@ This server runs on a Debian machine with:
 ### How does it work?
 
 Just
+
 	./energrid
+
 Or
+
 	python -i start_server.py
+
 
 #### energrid_core.py - 1.0
 contains all classes used to run the solution
