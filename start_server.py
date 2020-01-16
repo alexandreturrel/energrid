@@ -3,8 +3,11 @@ import os
 import sys
 
 def help():
-    print('Welcome to the Energrid Server Manager')
-    print('Here are useful commands to edit your Neighborhood:')
+    print('#=========================================#')
+    print('|         Energrid Server Manager         |')
+    print('#=========================================#')
+    print('')
+    print('Welcome! Here are useful commands to edit your Neighborhood:')
 
     print('\tdebug(BOOLEAN)\t\t\t\ttoggle DEBUG mode')
     print('\thelp()\t\t\t\t\tshows this message')
@@ -22,6 +25,8 @@ def help():
     print('\tstart_demo()\t\t\t\tDemonstration purpose generative script (in french)')
 
 n = e.Neighborhood(0)
+
+help()
 
 def debug(booleanValue):
     for house in n.houses:
