@@ -1,0 +1,5 @@
+# REQUIREMENTS.TXT for ENERGRID
+
+paho-mqtt
+influxdb
+
