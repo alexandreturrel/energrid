@@ -84,6 +84,16 @@ class Client:
                 print('connection done.')
             self.client.connected_flag = True
 
+
+#=======================
+#            led res tot
+# 0A <-----> 870     870
+# 1.150A <->     910 810
+# 1.435A <-> 929     803
+# 2.06A <--> 888 923 772
+#=======================
+
+
     def on_message(self, client, userdata, message):
         logging.info('message received on %s', message.topic)
         parsed_topic = message.topic.split("/")
