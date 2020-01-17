@@ -82,7 +82,7 @@ def showHouses():
 #   CONSUMERS
 #==============================================
 
-def newConsumer(*args):
+def newConsumer(*args):     #newConsumer(int HouseID, string CsmType) or newConsumer(int HouseID, int nbCsmToCreate, string CsmType)
     if len(args) == 2:
         n.houses[args[0]-1].add_consumer()
         n.houses[args[0]-1].consumers[-1].set_type(args[1])
@@ -94,19 +94,23 @@ def newConsumer(*args):
         print('Error! Expecting:')
         print('newConsumer(int HouseID, string CsmType) or newConsumer(int HouseID, int nbCsmToCreate, string CsmType)')
 
-def showConsumers(*args):
+def showConsumers(*args):       #showConsumers(int HouseID, int CsmID) or showConsumers(int HouseID, int CsmID)
     if len(args) == 1:
         for consumer in n.houses[args[0]-1].consumers:
             print(str(consumer))
         print('House Consumption: {}'.format(n.houses[args[0]-1].consume()))
     elif len(args) == 2:
         print(n.houses[args[0]-1].consumers[args[1]-1])
+    else:
+        print('Error: Expecting:')
+        print('showConsumers(int HouseID, int CsmID) or showConsumers(int HouseID, int CsmID)')
 
-def setConsumer(*args):
+def setConsumer(*args):     #setConsumer(int HouseID, int CsmID, [0,1])
     if len(args) == 3:
-        result = "Neighborhood/0/House/"+ str(args[0]) + "/Consumer/" + str(args[1]) + "/set"
-        command = 'mosquitto_pub -h 127.0.0.1 -m ' + str(args[2]) + ' -t ' + result
-        os.system(command)
+        #result = "Neighborhood/0/House/"+ str(args[0]) + "/Consumer/" + str(args[1]) + "/set"
+        n.houses[args[0]-1].client.publish(n.houses[args[0]-1].consumers[args[1]-1].name + '/set', args[2])
+        #command = 'mosquitto_pub -h 127.0.0.1 -m ' + str(args[2]) + ' -t ' + result
+        #os.system(command)
     else:
         print('Error: Expecting:')
         print('setConsumer(int HouseID, int CsmID, [0,1])')
@@ -159,3 +163,5 @@ def startDemo():
         print('Creation d\'une lampe dans la Maison {}'.format(i))
         newSupplier(i,'Solar Panel')
         print('Creation d\'un panneau solaire dans la Maison {}'.format(i))
+    newConsumer(2,'Relais')
+

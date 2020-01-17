@@ -26,8 +26,6 @@ class Client:
 
     debug = False
 
-    OPTIONS = ['new', 'update', 'remove', 'status', 'database']
-
     def __init__(self,name):
         #core
         self.name = name
@@ -117,15 +115,26 @@ class Client:
                         tmp_topic = str(message.topic)
                     else:
                         break
+
+                    #
+                    #   Conversion from analog values to real amp ones
+                    #   and writing it to the corresponding Consumer
+                    #
+
                     for consumer in House.consumers:
                         if tmp_topic == consumer.name:
-                            range1 = [0,1700]
-                            range2 = [-15,15]
+                            range1 = [0,1700]   #analog values read by the sensor
+                            range2 = [-15,15]   #real amp range 
                             delta1 = range1[1]-range1[0]
                             delta2 = range2[1]-range2[0]
+                            # result = the corresponding value from range1 into range2
+                            # 0 in range1 will be -15 in range2, 850 in range1 will be 0 in range2, 1700 in range1 will be 15 in range2
                             result = (delta2 * (parsed_message[key] - range1[0]) / delta1) + range2[0]
-                            consumer.pull.update(time.time(), result)
-                            if parsed_message[key] > 870:
+                            if result > 0:
+                                consumer.pull.update(time.time(), result)
+                            else:
+                                consumer.pull.update(time.time(), 0)
+                            if parsed_message[key] > 870:   #value to change if the 0 on the analog side is not 850
                                 consumer.pull.set_status(True)
                             else:
                                 consumer.pull.set_status(False)
@@ -165,9 +174,14 @@ class Client:
                                 if str(each_sensor) in options:
                                     options[u'{}'.format(each_sensor)]().update(time.time(), parsed_message[u'{}'.format(each_id)][u'{}'.format(each_sensor)])
                             check = True
-                
+
+        if(str(parsed_topic[-1]) == 'set' or str(parsed_topic[-1]) == 'booleanLoad'):
+            check = True
+
         if check == False:
-            print("Wrong peripheral")
+            print("Wrong message format, dropping it to the void of doom and forgetting it forever")
+        else:
+            self.historic.append(message)
 
     def on_disconnect(self, client, userdata, rc):
         if Client.debug:
@@ -313,7 +327,7 @@ class Consumer:
 #############################################
 class House:
 
-    client = Client('GhostHouse')
+    client = Client('GhostHouse') #fake House used to centralize all Consumers
     last_consumer_id = 0
     last_supplier_id = 0
     suppliers = []
@@ -353,12 +367,14 @@ class House:
         House.last_consumer_id += 1
         House.consumers.append(self.consumers[-1])
         self.client.add_topic(self.consumers[-1].name)
+        self.client.add_topic(self.consumers[-1].name + '/set')
 
     def rm_consumer(self,old_consumer_name):
         for i in range(len(self.consumers)):
             if self.consumers[i].name == old_consumer_name:
                 logging.info('Consumer %s removed from %s', old_consumer_name, self.name)
                 self.client.rm_topic(old_consumer_name)
+                self.client.rm_topic(old_consumer_name + '/set')
                 self.consumers.pop(i)
                 break
         for j in range(len(House.consumers)):
