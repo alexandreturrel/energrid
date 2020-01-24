@@ -41,7 +41,7 @@ def help():
     print('\tshowSuppliers(int HouseID,int SplID)\tshows SupplierID of HouseID')
     print('\tsetSupplier(int HouseID, int SplID, [0,1])\tset on or off a Supplier')
     print('#=========================================#')
-    print('\tstart_demo()\t\t\t\tDemonstration purpose generative script (in french)')
+    print('\tstartDemo()\t\t\t\tDemonstration purpose generative script (in french)')
     print('#=========================================#')
     print('')
     print('')
