@@ -126,7 +126,7 @@ links all services together and supervise the grid
 	showSuppliers(int HouseID): shows all Suppliers of HouseID
 	showSuppliers(int HouseID,int SplID): shows SupplierID of HouseID
 	setSupplier(int HouseID, int SplID, [0,1]): set on or off a Supplier
-	start_demo(): Demonstration purpose generative script (in french)
+	startDemo(): Demonstration purpose generative script (in french)
 
 #### energrid - 1.0
 starts an interactive python interpreter with all dependencies and start the server
